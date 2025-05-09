@@ -159,10 +159,10 @@
 <body>
     <h1>DHHS H.S 2025 Student Results Dashboard</h1>
     <h2>by Rupam Ghosh</h2>
-    
+
     <div class="controls">
-        <input type="text" id="searchInput" class="search-box" placeholder="Search by name, roll or number...">
-        
+        <input type="text" id="searchInput" class="search-box" placeholder="Search by name or registration number...">
+
         <select id="sortSelect" class="sort-select">
             <option value="">Sort by...</option>
             <option value="name">Name (A-Z)</option>
@@ -185,10 +185,9 @@
 
         </select>
     </div>
-    
+
     <div id="resultsContainer"></div>
 
-    <!-- Modal for detailed view -->
     <div id="detailsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn">&times;</span>
@@ -223,41 +222,43 @@
         // Display students in cards
         function displayStudents(students) {
             resultsContainer.innerHTML = '';
-            
+
             if (students.length === 0) {
-                resultsContainer.innerHTML = '<p>No students found matching your search.</p>';
+                resultsContainer.innerHTML = '<p>No students found matching your search criteria.</p>';
                 return;
             }
-            
+
             students.forEach(student => {
                 const card = document.createElement('div');
                 card.className = 'student-card';
-                
+
                 const statusClass = student.result_data.result['Result Status'] === 'PASS' ? 'status-pass' : 'status-fail';
-                
+
+                // Updated metadata to show Roll and Registration
                 card.innerHTML = `
                     <div class="student-name">${student.student_info.name}</div>
                     <div class="student-meta">
-                        Roll: ${student.student_info.roll} | 
-                        Number: ${student.student_info.number}
+                        Roll: ${student.student_info.roll} |
+                        Registration: ${student.student_info.registration_no}
                     </div>
                     <div class="result-status ${statusClass}">${student.result_data.result['Result Status']}</div>
                     <div style="margin-top: 10px;">
-                        <strong>Grade:</strong> ${student.result_data.result['Overall Grade'].trim()} | 
+                        <strong>Grade:</strong> ${student.result_data.result['Overall Grade'].trim()} |
                         <strong>Aggregate:</strong> ${student.result_data.result['Aggregate']}
                     </div>
-                    <button class="details-btn" onclick="showDetails('${student.student_info.number}')">View Details</button>
+                    <button class="details-btn" onclick="showDetails('${student.student_info.registration_no}')">View Details</button>
                 `;
-                
+
                 resultsContainer.appendChild(card);
             });
         }
 
-        // Show detailed view in modal
-        function showDetails(studentNumber) {
-            const student = allStudents.find(s => s.student_info.number == studentNumber);
+        // Show detailed view in modal - uses registration_no to find student
+        function showDetails(studentRegistrationNo) {
+            // Find student by registration_no
+            const student = allStudents.find(s => s.student_info.registration_no == studentRegistrationNo);
             if (!student) return;
-            
+
             const subjectsHtml = student.result_data.subjects.map(subject => `
                 <div class="subject-card">
                     <div class="subject-name">${getSubjectName(subject.subject_code)}</div>
@@ -266,28 +267,28 @@
                     <div>Percentile: ${subject.subject_percentile}</div>
                 </div>
             `).join('');
-            
+
             modalContent.innerHTML = `
                 <h2>${student.student_info.name}</h2>
                 <p>
-                    <strong>Roll:</strong> ${student.student_info.roll} | 
-                    <strong>Number:</strong> ${student.student_info.number} | 
+                    <strong>Roll:</strong> ${student.student_info.roll} |
+                    <strong>Number:</strong> ${student.student_info.number} |
                     <strong>Registration:</strong> ${student.student_info.registration_no}
                 </p>
-                
+
                 <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
                     <strong>Result:</strong> ${student.result_data.result['Result Status']}<br>
                     <strong>Overall Grade:</strong> ${student.result_data.result['Overall Grade'].trim()}<br>
                     <strong>Aggregate Marks:</strong> ${student.result_data.result['Aggregate']}<br>
                     <strong>Overall Percentile:</strong> ${student.result_data.result['Overall Percentile']}
                 </div>
-                
+
                 <h3>Subject-wise Performance</h3>
                 <div class="subject-grid">
                     ${subjectsHtml}
                 </div>
             `;
-            
+
             modal.style.display = 'flex';
         }
 
@@ -301,13 +302,13 @@
             }
         });
 
-        // Search functionality
+        // Search functionality - searches by name or registration number
         searchInput.addEventListener('input', () => {
             const searchTerm = searchInput.value.toLowerCase();
-            const filtered = allStudents.filter(student => 
+            const filtered = allStudents.filter(student =>
                 student.student_info.name.toLowerCase().includes(searchTerm) ||
-                student.student_info.roll.toString().includes(searchTerm) ||
-                student.student_info.number.toString().includes(searchTerm)
+                // Search using registration_no
+                student.student_info.registration_no.toString().includes(searchTerm)
             );
             displayStudents(filtered);
         });
@@ -315,16 +316,20 @@
         // Sort functionality
         sortSelect.addEventListener('change', () => {
             const sortBy = sortSelect.value;
-            if (!sortBy) return;
-            
+            if (!sortBy) {
+                displayStudents(allStudents); // Show original order if "Sort by..." is selected
+                return;
+            }
+
             const sorted = [...allStudents].sort((a, b) => {
                 if (sortBy === 'name') {
                     return a.student_info.name.localeCompare(b.student_info.name);
                 }
                 if (sortBy === 'aggregate') {
-                    return b.result_data.result['Aggregate'] - a.result_data.result['Aggregate'];
+                    // Convert Aggregate to number for correct sorting
+                    return parseInt(b.result_data.result['Aggregate']) - parseInt(a.result_data.result['Aggregate']);
                 }
-                
+
                 // Sort by subject marks
                 const subjectCodes = {
                     'english': 'ENGB',
@@ -344,23 +349,24 @@
                     'phil': 'PHIL'
                 };
 
-                
+
                 const code = subjectCodes[sortBy];
                 const aMarks = getSubjectMarks(a, code);
                 const bMarks = getSubjectMarks(b, code);
-                return bMarks - aMarks;
+                return bMarks - aMarks; // Descending order for marks
             });
-            
+
             displayStudents(sorted);
         });
 
         // Helper function to get subject marks
         function getSubjectMarks(student, subjectCode) {
             const subject = student.result_data.subjects.find(s => s.subject_code === subjectCode);
+            // Return 0 if subject not found, ensure parsing to number
             return subject ? parseInt(subject.subject_marks) : 0;
         }
 
-        // Helper function to get full subject name
+        // Helper function to get full subject name (Expanded map based on sort options)
         function getSubjectName(code) {
             const subjectMap = {
                 'ENGB': 'English',
@@ -369,10 +375,18 @@
                 'PHYS': 'Physics',
                 'CHEM': 'Chemistry',
                 'BIOS': 'Biology',
-                'COMP': 'Computer Science',
-                'HIST': 'History'
+                'COMS': 'Computer Science',
+                'PHIL': 'Philosophy',
+                'CSTX': 'Costing & Taxation',
+                'HIST': 'History',
+                'GEGR': 'Geography',
+                'POLS': 'Political Science',
+                'ACCT': 'Accountancy',
+                'ECON': 'Economics',
+                'COMA': 'Computer Application'
+                // Add other subject codes from your JSON if needed
             };
-            return subjectMap[code] || code;
+            return subjectMap[code] || code; // Return code if name not found
         }
     </script>
 </body>
