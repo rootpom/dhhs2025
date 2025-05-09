@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Results Dashboard</title>
+    <style>
+        /* ===== GENERAL STYLES ===== */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        /* ===== CONTROLS STYLES ===== */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            flex-grow: 1;
+            max-width: 400px;
+        }
+        .sort-select {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: white;
+        }
+
+        /* ===== STUDENT CARD STYLES ===== */
+        #resultsContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .student-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            transition: transform 0.2s;
+        }
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .student-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        .student-meta {
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        .result-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .status-pass {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .status-fail {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .details-btn {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .details-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* ===== MODAL STYLES ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close-btn {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .subject-card {
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .subject-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        /* ===== RESPONSIVE ADJUSTMENTS ===== */
+        @media (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+            }
+            .search-box, .sort-select {
+                max-width: 100%;
+            }
+            #resultsContainer {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>DHHS H.S 2025 Student Results Dashboard</h1>
+    <h2>by Rupam Ghosh</h2>
+    
+    <div class="controls">
+        <input type="text" id="searchInput" class="search-box" placeholder="Search by name, roll or number...">
+        
+        <select id="sortSelect" class="sort-select">
+            <option value="">Sort by...</option>
+            <option value="name">Name (A-Z)</option>
+            <option value="aggregate">Aggregate Marks</option>
+            <option value="english">English Marks</option>
+            <option value="bengali">Bengali Marks</option>
+            <option value="math">Mathematics</option>
+            <option value="physics">Physics</option>
+            <option value="chemistry">Chemistry</option>
+            <option value="biology">Biology</option>
+            <option value="coms">Computer Science</option>
+
+            <option value="cstx">Costing & Taxation</option>
+            <option value="hist">History</option>
+            <option value="geo">Geography</option>
+            <option value="pols">Political Science</option>
+            <option value="acct">Accountancy</option>
+            <option value="econ">Economics</option>
+            <option value="coma">Computer Application</option>
+
+        </select>
+    </div>
+    
+    <div id="resultsContainer"></div>
+
+    <!-- Modal for detailed view -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let allStudents = [];
+        const resultsContainer = document.getElementById('resultsContainer');
+        const searchInput = document.getElementById('searchInput');
+        const sortSelect = document.getElementById('sortSelect');
+        const modal = document.getElementById('detailsModal');
+        const modalContent = document.getElementById('modalContent');
+        const closeBtn = document.querySelector('.close-btn');
+
+        // Load JSON data when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('student_results.json')
+                .then(response => response.json())
+                .then(data => {
+                    allStudents = data;
+                    displayStudents(allStudents);
+                })
+                .catch(error => {
+                    console.error('Error loading JSON:', error);
+                    resultsContainer.innerHTML = '<p style="color:red">Error loading student data. Please check console.</p>';
+                });
+        });
+
+        // Display students in cards
+        function displayStudents(students) {
+            resultsContainer.innerHTML = '';
+            
+            if (students.length === 0) {
+                resultsContainer.innerHTML = '<p>No students found matching your search.</p>';
+                return;
+            }
+            
+            students.forEach(student => {
+                const card = document.createElement('div');
+                card.className = 'student-card';
+                
+                const statusClass = student.result_data.result['Result Status'] === 'PASS' ? 'status-pass' : 'status-fail';
+                
+                card.innerHTML = `
+                    <div class="student-name">${student.student_info.name}</div>
+                    <div class="student-meta">
+                        Roll: ${student.student_info.roll} | 
+                        Number: ${student.student_info.number}
+                    </div>
+                    <div class="result-status ${statusClass}">${student.result_data.result['Result Status']}</div>
+                    <div style="margin-top: 10px;">
+                        <strong>Grade:</strong> ${student.result_data.result['Overall Grade'].trim()} | 
+                        <strong>Aggregate:</strong> ${student.result_data.result['Aggregate']}
+                    </div>
+                    <button class="details-btn" onclick="showDetails('${student.student_info.number}')">View Details</button>
+                `;
+                
+                resultsContainer.appendChild(card);
+            });
+        }
+
+        // Show detailed view in modal
+        function showDetails(studentNumber) {
+            const student = allStudents.find(s => s.student_info.number == studentNumber);
+            if (!student) return;
+            
+            const subjectsHtml = student.result_data.subjects.map(subject => `
+                <div class="subject-card">
+                    <div class="subject-name">${getSubjectName(subject.subject_code)}</div>
+                    <div>Marks: ${subject.subject_marks}</div>
+                    <div>Grade: ${subject.subject_grade.trim()}</div>
+                    <div>Percentile: ${subject.subject_percentile}</div>
+                </div>
+            `).join('');
+            
+            modalContent.innerHTML = `
+                <h2>${student.student_info.name}</h2>
+                <p>
+                    <strong>Roll:</strong> ${student.student_info.roll} | 
+                    <strong>Number:</strong> ${student.student_info.number} | 
+                    <strong>Registration:</strong> ${student.student_info.registration_no}
+                </p>
+                
+                <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                    <strong>Result:</strong> ${student.result_data.result['Result Status']}<br>
+                    <strong>Overall Grade:</strong> ${student.result_data.result['Overall Grade'].trim()}<br>
+                    <strong>Aggregate Marks:</strong> ${student.result_data.result['Aggregate']}<br>
+                    <strong>Overall Percentile:</strong> ${student.result_data.result['Overall Percentile']}
+                </div>
+                
+                <h3>Subject-wise Performance</h3>
+                <div class="subject-grid">
+                    ${subjectsHtml}
+                </div>
+            `;
+            
+            modal.style.display = 'flex';
+        }
+
+        // Close modal
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Search functionality
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filtered = allStudents.filter(student => 
+                student.student_info.name.toLowerCase().includes(searchTerm) ||
+                student.student_info.roll.toString().includes(searchTerm) ||
+                student.student_info.number.toString().includes(searchTerm)
+            );
+            displayStudents(filtered);
+        });
+
+        // Sort functionality
+        sortSelect.addEventListener('change', () => {
+            const sortBy = sortSelect.value;
+            if (!sortBy) return;
+            
+            const sorted = [...allStudents].sort((a, b) => {
+                if (sortBy === 'name') {
+                    return a.student_info.name.localeCompare(b.student_info.name);
+                }
+                if (sortBy === 'aggregate') {
+                    return b.result_data.result['Aggregate'] - a.result_data.result['Aggregate'];
+                }
+                
+                // Sort by subject marks
+                const subjectCodes = {
+                    'english': 'ENGB',
+                    'bengali': 'BNGA',
+                    'math': 'MATH',
+                    'physics': 'PHYS',
+                    'chemistry': 'CHEM',
+                    'biology': 'BIOS',
+                    'coms': 'COMS',
+                    'cstx': 'CSTX',
+                    'hist': 'HIST',
+                    'geo': 'GEO',
+                    'pols': 'POL',
+                    'acct': 'ACCT',
+                    'econ': 'ECON',
+                    'coma': 'COMA'
+                };
+
+                
+                const code = subjectCodes[sortBy];
+                const aMarks = getSubjectMarks(a, code);
+                const bMarks = getSubjectMarks(b, code);
+                return bMarks - aMarks;
+            });
+            
+            displayStudents(sorted);
+        });
+
+        // Helper function to get subject marks
+        function getSubjectMarks(student, subjectCode) {
+            const subject = student.result_data.subjects.find(s => s.subject_code === subjectCode);
+            return subject ? parseInt(subject.subject_marks) : 0;
+        }
+
+        // Helper function to get full subject name
+        function getSubjectName(code) {
+            const subjectMap = {
+                'ENGB': 'English',
+                'BNGA': 'Bengali',
+                'MATH': 'Mathematics',
+                'PHYS': 'Physics',
+                'CHEM': 'Chemistry',
+                'BIOS': 'Biology',
+                'COMP': 'Computer Science',
+                'HIST': 'History'
+            };
+            return subjectMap[code] || code;
+        }
+    </script>
+</body>
+</html>
