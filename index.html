@@ -4,100 +4,209 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Results Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* ===== GENERAL STYLES ===== */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f7fa;
-            color: #333;
-        }
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 30px;
+        /* CSS Variables for easier color management */
+        :root {
+            --primary-blue: #3498db;
+            --dark-heading: #2c3e50;
+            --text-color: #333;
+            --light-grey-bg: #f5f7fa;
+            --border-color: #ddd;
+            --card-bg: #fff;
+            --pass-color: #2ecc71;
+            --fail-color: #e74c3c;
+            --meta-text-color: #7f8c8d;
         }
 
-        /* ===== CONTROLS STYLES ===== */
+        /* ===== GENERAL STYLES ===== */
+        body {
+            font-family: 'Roboto', sans-serif; /* Using Roboto font */
+            margin: 0;
+            padding: 20px;
+            background-color: var(--light-grey-bg);
+            color: var(--text-color);
+            line-height: 1.6; /* Improved readability */
+        }
+        h1, h2 {
+            text-align: center;
+            color: var(--dark-heading);
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+         h1 {
+             margin-top: 0;
+             margin-bottom: 5px;
+             font-size: 2.5em;
+         }
+        h2 {
+            font-size: 1.2em;
+            color: var(--meta-text-color);
+            margin-bottom: 30px;
+            font-weight: 400;
+        }
+
+
+        /* ===== CONTROLS & COUNT STYLES ===== */
+        .dashboard-controls { /* Container for controls and count */
+            margin-bottom: 25px;
+            padding: 15px 20px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column; /* Stack on small screens */
+            gap: 15px;
+        }
+
         .controls {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
             gap: 15px;
             flex-wrap: wrap;
+            justify-content: center; /* Center controls when they wrap */
         }
-        .search-box {
-            padding: 10px 15px;
-            border: 1px solid #ddd;
+        .search-box, .sort-select {
+            padding: 12px 18px; /* Increased padding */
+            border: 1px solid var(--border-color);
             border-radius: 5px;
-            font-size: 16px;
+            font-size: 1em;
             flex-grow: 1;
-            max-width: 400px;
+            max-width: 350px; /* Max width for input/select */
+            box-sizing: border-box; /* Include padding/border in element's total width */
         }
+
+        .search-box:focus, .sort-select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+
         .sort-select {
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            background-color: white;
+            background-color: var(--card-bg);
+            cursor: pointer;
+            /* Remove default dropdown arrow in some browsers */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.362%22%20height%3D%22292.362%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287.133%2C132.867c-3.613-3.613-7.959-5.425-12.999-5.425L18.224%2C127.442c-5.04%2C0-9.386%2C1.813-12.999%2C5.425C1.613%2C136.486%2C0%2C140.832%2C0%2C145.872s1.613%2C9.386%2C4.625%2C12.999l128.076%2C128.076c3.613%2C3.613%2C7.959%2C5.425%2C12.999%2C5.425s9.386-1.813%2C12.999-5.425L287.133%2C158.87c3.613-3.613%2C5.425-7.959%2C5.425-12.999C292.558%2C140.832%2C290.745%2C136.486%2C287.133%2C132.867z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 12px;
+            padding-right: 35px; /* Make space for custom arrow */
         }
+
+        .count-display {
+            margin-top: 10px; /* Add margin above count */
+            text-align: center;
+            color: var(--meta-text-color);
+            font-size: 1em;
+            font-weight: 500;
+        }
+        .count-display span {
+            font-weight: 700;
+            color: var(--dark-heading);
+        }
+
 
         /* ===== STUDENT CARD STYLES ===== */
         #resultsContainer {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Adjusted minmax */
             gap: 20px;
         }
         .student-card {
-            background-color: white;
+            background-color: var(--card-bg);
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            transition: transform 0.2s;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1); /* Slightly stronger shadow */
+            padding: 25px; /* Increased padding */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth transition */
+            display: flex;
+            flex-direction: column; /* Stack content vertically */
+            justify-content: space-between; /* Distribute space */
         }
         .student-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-7px); /* More pronounced lift */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
         }
         .student-name {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #2c3e50;
+            font-size: 1.3em; /* Larger name font */
+            font-weight: 700;
+            margin-bottom: 8px; /* Increased margin */
+            color: var(--dark-heading);
+            word-break: break-word; /* Prevent long names from overflowing */
         }
         .student-meta {
-            color: #7f8c8d;
-            margin-bottom: 10px;
+            color: var(--meta-text-color);
+            margin-bottom: 15px; /* Increased margin */
+            font-size: 0.9em;
         }
         .result-status {
             display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 14px;
+            padding: 5px 12px; /* Adjusted padding */
+            border-radius: 20px; /* Pill shape */
+            font-weight: 700;
+            font-size: 0.9em;
+            margin-bottom: 15px; /* Margin below status */
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .status-pass {
-            background-color: #2ecc71;
+            background-color: var(--pass-color);
             color: white;
         }
         .status-fail {
-            background-color: #e74c3c;
+            background-color: var(--fail-color);
             color: white;
         }
+         .student-card > div:nth-child(4) { /* Style for the aggregate/grade div */
+             margin-top: 0; /* Remove default margin */
+             margin-bottom: 15px; /* Add margin below aggregate */
+             font-size: 0.95em;
+         }
         .details-btn {
-            margin-top: 10px;
-            padding: 8px 15px;
-            background-color: #3498db;
+            /* margin-top: auto; REMOVED from here, handled by card-actions flex */
+            padding: 10px 20px; /* Adjusted padding */
+            background-color: var(--primary-blue);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px; /* Slightly larger radius */
             cursor: pointer;
-            font-size: 14px;
+            font-size: 1em;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+            text-align: center;
+            flex-grow: 1; /* Allows flex item to grow */
         }
         .details-btn:hover {
-            background-color: #2980b9;
+            background-color: #2980b9; /* Darker shade on hover */
         }
+
+        .download-pdf-btn {
+             padding: 10px 20px;
+             background-color: #e67e22; /* Example color (orange) */
+             color: white;
+             border: none;
+             border-radius: 5px;
+             cursor: pointer;
+             font-size: 1em;
+             font-weight: 500;
+             transition: background-color 0.2s ease-in-out;
+             text-align: center;
+             flex-grow: 1; /* Allows flex item to grow */
+         }
+         .download-pdf-btn:hover {
+              background-color: #d35400; /* Darker shade on hover */
+         }
+
+        /* Container for buttons within the card */
+        .card-actions {
+            display: flex;
+            gap: 10px; /* Space between buttons */
+            margin-top: auto; /* Pushes the button container to the bottom */
+        }
+
 
         /* ===== MODAL STYLES ===== */
         .modal {
@@ -107,86 +216,226 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            padding: 20px; /* Add padding for small screens */
+            box-sizing: border-box;
+            overflow-y: auto; /* Allow scrolling if content is tall */
         }
-        .modal-content {
-            background-color: white;
-            padding: 25px;
-            border-radius: 8px;
+         .modal-content {
+            background-color: var(--card-bg);
+            padding: 30px; /* Increased padding */
+            border-radius: 10px; /* Larger radius */
             max-width: 800px;
-            width: 90%;
-            max-height: 80vh;
+            width: 100%; /* Ensure it uses full width minus padding on small screens */
+            max-height: 90vh; /* Allow content to take up more screen height */
             overflow-y: auto;
-        }
+            position: relative; /* For positioning close button */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+         }
+
         .close-btn {
-            float: right;
-            font-size: 24px;
+            position: absolute; /* Position relative to modal-content */
+            top: 15px;
+            right: 15px;
+            font-size: 28px; /* Larger close button */
             cursor: pointer;
+            color: var(--meta-text-color);
+            transition: color 0.2s ease-in-out;
         }
+        .close-btn:hover {
+            color: var(--dark-heading);
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+            text-align: left; /* Align modal heading left */
+        }
+        .modal-content p {
+            margin-bottom: 20px;
+            font-size: 1em;
+            color: var(--text-color);
+        }
+
+        .modal-content > div:nth-child(3) { /* Style for the result summary div */
+            margin: 15px 0;
+            padding: 15px; /* Increased padding */
+            background: var(--light-grey-bg); /* Use lighter background */
+            border-radius: 5px;
+            border-left: 4px solid var(--primary-blue); /* Add a left border accent */
+            font-size: 0.95em;
+        }
+
+         .modal-content h3 {
+             margin-top: 20px;
+             margin-bottom: 15px;
+             font-size: 1.4em;
+             color: var(--dark-heading);
+             border-bottom: 1px solid var(--border-color); /* Add a subtle separator */
+             padding-bottom: 5px;
+         }
+
         .subject-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Adjusted minmax */
             gap: 15px;
             margin: 15px 0;
         }
         .subject-card {
-            border: 1px solid #eee;
-            padding: 10px;
+            border: 1px solid var(--border-color);
+            padding: 15px; /* Increased padding */
             border-radius: 5px;
+            background-color: var(--card-bg); /* Ensure white background */
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
         }
         .subject-name {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--dark-heading);
+            font-size: 1em;
         }
+         .subject-card div { /* Style for lines within subject card */
+             font-size: 0.9em;
+             color: var(--text-color);
+             margin-bottom: 4px; /* Space between lines */
+         }
+         .subject-card div:last-child {
+             margin-bottom: 0; /* No bottom margin for last line */
+         }
+
 
         /* ===== RESPONSIVE ADJUSTMENTS ===== */
-        @media (max-width: 600px) {
+        @media (min-width: 768px) { /* Apply these styles on medium screens and up */
+            .controls {
+                flex-wrap: nowrap; /* Prevent wrapping on larger screens */
+                 justify-content: flex-start; /* Align controls to the start */
+            }
+            .search-box {
+                 max-width: 400px; /* Allow search box to be wider */
+            }
+             .dashboard-controls {
+                 flex-direction: row; /* Arrange controls and count side-by-side */
+                 justify-content: space-between; /* Distribute space */
+                 align-items: center; /* Vertically align items */
+             }
+            .count-display {
+                 margin-top: 0;
+                 flex-shrink: 0; /* Prevent shrinking */
+                 text-align: right; /* Align count to the right */
+             }
+        }
+
+        @media (max-width: 600px) { /* Existing small screen adjustments, refined */
+            body {
+                 padding: 15px; /* Reduced padding on very small screens */
+            }
+            h1 {
+                font-size: 2em;
+            }
+            h2 {
+                font-size: 1em;
+            }
+            .dashboard-controls {
+                padding: 10px 15px;
+            }
             .controls {
                 flex-direction: column;
+                gap: 10px; /* Smaller gap */
             }
             .search-box, .sort-select {
-                max-width: 100%;
+                max-width: 100%; /* Full width */
+                font-size: 0.95em;
+                padding: 10px 15px;
             }
-            #resultsContainer {
-                grid-template-columns: 1fr;
+             .sort-select {
+                 background-position: right 10px center;
+                 padding-right: 30px;
+             }
+            .count-display {
+                 font-size: 0.95em;
+                 margin-top: 10px;
+             }
+             #resultsContainer {
+                 grid-template-columns: 1fr; /* Stack cards */
+                 gap: 15px; /* Smaller gap */
+             }
+            .student-card {
+                 padding: 20px;
+             }
+            .student-name {
+                font-size: 1.2em;
             }
+            .student-meta {
+                 font-size: 0.85em;
+             }
+            .result-status {
+                 padding: 4px 10px;
+                 font-size: 0.85em;
+             }
+             .details-btn, .download-pdf-btn {
+                 padding: 8px 15px;
+                 font-size: 0.9em;
+             }
+
+            .modal-content {
+                 padding: 20px;
+            }
+             .modal-content h2 {
+                 font-size: 1.5em;
+             }
+             .modal-content p {
+                 font-size: 0.95em;
+             }
+             .modal-content h3 {
+                 font-size: 1.2em;
+             }
+             .subject-grid {
+                 grid-template-columns: 1fr; /* Stack subject cards */
+             }
         }
     </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 </head>
 <body>
     <h1>DHHS H.S 2025 Student Results Dashboard</h1>
     <h2>by Rupam Ghosh</h2>
 
-    <div class="controls">
-        <input type="text" id="searchInput" class="search-box" placeholder="Search by name or registration number...">
+    <div class="dashboard-controls"> <div class="controls">
+            <input type="text" id="searchInput" class="search-box" placeholder="Search by name or registration number...">
 
-        <select id="sortSelect" class="sort-select">
-            <option value="">Sort by...</option>
-            <option value="name">Name (A-Z)</option>
-            <option value="aggregate">Aggregate Marks</option>
-            <option value="english">English Marks</option>
-            <option value="bengali">Bengali Marks</option>
-            <option value="math">Mathematics</option>
-            <option value="physics">Physics</option>
-            <option value="chemistry">Chemistry</option>
-            <option value="biology">Biology</option>
-            <option value="coms">Computer Science</option>
-            <option value="phil">Philosophy</option>
-            <option value="cstx">Costing & Taxation</option>
-            <option value="hist">History</option>
-            <option value="geo">Geography</option>
-            <option value="pols">Political Science</option>
-            <option value="acct">Accountancy</option>
-            <option value="econ">Economics</option>
-            <option value="coma">Computer Application</option>
+            <select id="sortSelect" class="sort-select">
+                <option value="">Sort by...</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="aggregate">Aggregate Marks</option>
+                <option value="english">English Marks</option>
+                <option value="bengali">Bengali Marks</option>
+                <option value="math">Mathematics</option>
+                <option value="physics">Physics</option>
+                <option value="chemistry">Chemistry</option>
+                <option value="biology">Biology</option>
+                <option value="coms">Computer Science</option>
+                <option value="phil">Philosophy</option>
+                <option value="cstx">Costing & Taxation</option>
+                <option value="hist">History</option>
+                <option value="geo">Geography</option>
+                <option value="pols">Political Science</option>
+                <option value="acct">Accountancy</option>
+                <option value="econ">Economics</option>
+                <option value="coma">Computer Application</option>
+            </select>
+        </div>
 
-        </select>
-    </div>
-
-    <div id="resultsContainer"></div>
+        <div class="count-display">
+            Total Students Shown: <span id="studentCount">0</span>
+        </div>
+    </div> <div id="resultsContainer"></div>
 
     <div id="detailsModal" class="modal">
         <div class="modal-content">
@@ -204,6 +453,8 @@
         const modal = document.getElementById('detailsModal');
         const modalContent = document.getElementById('modalContent');
         const closeBtn = document.querySelector('.close-btn');
+        // Reference to the count span element
+        const studentCountSpan = document.getElementById('studentCount');
 
         // Load JSON data when page loads
         document.addEventListener('DOMContentLoaded', () => {
@@ -212,20 +463,23 @@
                 .then(data => {
                     allStudents = data;
                     displayStudents(allStudents);
+                    // Initial count update after data is loaded and displayed
+                    updateStudentCount(allStudents.length);
                 })
                 .catch(error => {
                     console.error('Error loading JSON:', error);
                     resultsContainer.innerHTML = '<p style="color:red">Error loading student data. Please check console.</p>';
+                    // Set count to 0 on error
+                    updateStudentCount(0);
                 });
         });
 
-        // Display students in cards
+        // Display students in cards and update the count
         function displayStudents(students) {
             resultsContainer.innerHTML = '';
 
             if (students.length === 0) {
                 resultsContainer.innerHTML = '<p>No students found matching your search criteria.</p>';
-                return;
             }
 
             students.forEach(student => {
@@ -246,12 +500,28 @@
                         <strong>Grade:</strong> ${student.result_data.result['Overall Grade'].trim()} |
                         <strong>Aggregate:</strong> ${student.result_data.result['Aggregate']}
                     </div>
-                    <button class="details-btn" onclick="showDetails('${student.student_info.registration_no}')">View Details</button>
+                    <div class="card-actions"> <button class="details-btn" onclick="showDetails('${student.student_info.registration_no}')">View Details</button>
+                        <button class="download-pdf-btn" onclick="downloadStudentPdf('${student.student_info.registration_no}')">Download PDF</button> </div>
                 `;
 
                 resultsContainer.appendChild(card);
             });
+
+            // Update count based on currently displayed students (which might be filtered)
+            updateStudentCount(students.length);
         }
+
+        // Function to update the student count display
+        function updateStudentCount(count) {
+             // Ensure the studentCountSpan element exists before trying to update it
+            const studentCountSpan = document.getElementById('studentCount');
+            if (studentCountSpan) {
+                studentCountSpan.textContent = count;
+            } else {
+                console.error("HTML element with id='studentCount' not found.");
+            }
+        }
+
 
         // Show detailed view in modal - uses registration_no to find student
         function showDetails(studentRegistrationNo) {
@@ -276,7 +546,7 @@
                     <strong>Registration:</strong> ${student.student_info.registration_no}
                 </p>
 
-                <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid var(--primary-blue);">
                     <strong>Result:</strong> ${student.result_data.result['Result Status']}<br>
                     <strong>Overall Grade:</strong> ${student.result_data.result['Overall Grade'].trim()}<br>
                     <strong>Aggregate Marks:</strong> ${student.result_data.result['Aggregate']}<br>
@@ -310,14 +580,14 @@
                 // Search using registration_no
                 student.student_info.registration_no.toString().includes(searchTerm)
             );
-            displayStudents(filtered);
+            displayStudents(filtered); // displayStudents will call updateStudentCount with the filtered count
         });
 
         // Sort functionality
         sortSelect.addEventListener('change', () => {
             const sortBy = sortSelect.value;
             if (!sortBy) {
-                displayStudents(allStudents); // Show original order if "Sort by..." is selected
+                displayStudents(allStudents); // Show original order, displayStudents updates count
                 return;
             }
 
@@ -339,14 +609,14 @@
                     'chemistry': 'CHEM',
                     'biology': 'BIOS',
                     'coms': 'COMS',
+                    'phil': 'PHIL',
                     'cstx': 'CSTX',
                     'hist': 'HIST',
                     'geo': 'GEGR',
                     'pols': 'POLS',
                     'acct': 'ACCT',
                     'econ': 'ECON',
-                    'coma': 'COMA',
-                    'phil': 'PHIL'
+                    'coma': 'COMA'
                 };
 
 
@@ -356,8 +626,98 @@
                 return bMarks - aMarks; // Descending order for marks
             });
 
-            displayStudents(sorted);
+            displayStudents(sorted); // displayStudents updates count
         });
+
+        // New function to download student details as PDF
+        async function downloadStudentPdf(studentRegistrationNo) {
+            const student = allStudents.find(s => s.student_info.registration_no == studentRegistrationNo);
+            if (!student) {
+                console.error('Student not found for PDF generation:', studentRegistrationNo);
+                return;
+            }
+
+            // Generate the HTML content specifically for the PDF
+             // Note: This HTML content is styled inline or with simple CSS
+             // as html2canvas has limitations with complex CSS like Flexbox/Grid for layout.
+             // Adjust styling here for how you want the PDF content to look.
+            const pdfContentHtml = `
+                <div style="padding: 20px; font-family: 'Roboto', sans-serif; color: #333; width: 190mm;">
+                    <h2 style="text-align: center; color: #2c3e50; margin-bottom: 15px;">Student Result Details</h2>
+                    <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                        <h3 style="color: #3498db; margin-bottom: 5px;">Student Information</h3>
+                        <p style="margin: 0;"><strong>Name:</strong> ${student.student_info.name}</p>
+                        <p style="margin: 5px 0 0;"><strong>Roll:</strong> ${student.student_info.roll}</p>
+                        <p style="margin: 5px 0 0;"><strong>Number:</strong> ${student.student_info.number}</p>
+                        <p style="margin: 5px 0 0;"><strong>Registration:</strong> ${student.student_info.registration_no}</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #3498db;">
+                         <h3 style="color: #3498db; margin-top: 0; margin-bottom: 10px;">Overall Result</h3>
+                        <p style="margin: 0;"><strong>Result:</strong> ${student.result_data.result['Result Status']}</p>
+                        <p style="margin: 5px 0 0;"><strong>Overall Grade:</strong> ${student.result_data.result['Overall Grade'].trim()}</p>
+                        <p style="margin: 5px 0 0;"><strong>Aggregate Marks:</strong> ${student.result_data.result['Aggregate']}</p>
+                        <p style="margin: 5px 0 0;"><strong>Overall Percentile:</strong> ${student.result_data.result['Overall Percentile']}
+                    </div>
+
+                    <h3 style="color: #3498db; margin-top: 20px; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid #eee;">Subject-wise Performance</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+                        ${student.result_data.subjects.map(subject => `
+                            <div style="border: 1px solid #eee; padding: 10px; border-radius: 5px;">
+                                <div style="font-weight: 700; margin-bottom: 5px; color: #2c3e50;">${getSubjectName(subject.subject_code)}</div>
+                                <div style="font-size: 0.9em; color: #333;">Marks: ${subject.subject_marks}</div>
+                                <div style="font-size: 0.9em; color: #333;">Grade: ${subject.subject_grade.trim()}</div>
+                                <div style="font-size: 0.9em; color: #333;">Percentile: ${subject.subject_percentile}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            // Create a temporary div to render the content off-screen
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = pdfContentHtml;
+            // Position it off-screen to prevent it from affecting the user view
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            // Set a specific width suitable for PDF conversion (e.g., close to A4 width)
+            tempDiv.style.width = '210mm'; // A4 width in mm - html2canvas works better with a defined width
+            document.body.appendChild(tempDiv);
+
+            try {
+                 // Use html2canvas to render the temporary div as an image
+                 // scale: increase for better resolution
+                 const canvas = await html2canvas(tempDiv, { scale: 2 });
+
+                 const imgData = canvas.toDataURL('image/png');
+                 // Use window.jspdf to ensure it's accessed correctly after library load
+                 const { jsPDF } = window.jspdf;
+                 const doc = new jsPDF('p', 'mm', 'a4'); // Create A4 PDF in portrait mode
+
+                 const imgProps = doc.getImageProperties(imgData);
+                 const pdfWidth = doc.internal.pageSize.getWidth();
+                 // Calculate PDF height maintaining aspect ratio
+                 const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                 // Add the image to the PDF. This will likely be one long image page if content is tall.
+                 doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+                 // Save the PDF
+                 // Replace spaces in name with underscores for filename
+                 const filename = `${student.student_info.name.replace(/\s+/g, '_')}_Result.pdf`;
+                 doc.save(filename);
+
+            } catch (error) {
+                 console.error("Error generating PDF:", error);
+                 alert("Could not generate PDF. Please try again.");
+            } finally {
+                // Clean up the temporary div from the DOM
+                if (tempDiv.parentNode) {
+                    tempDiv.parentNode.removeChild(tempDiv);
+                }
+            }
+        }
+
 
         // Helper function to get subject marks
         function getSubjectMarks(student, subjectCode) {
