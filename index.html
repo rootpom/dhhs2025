@@ -490,7 +490,7 @@
 
                 // Updated metadata to show Roll and Registration
                 card.innerHTML = `
-                    <div class="student-name">${student.student_info.name}</div>
+                    <div class="student-name">${student.result_data.candidate_info['Candidate Name']}</div>
                     <div class="student-meta">
                         Roll: ${student.student_info.roll} |
                         Registration: ${student.student_info.registration_no}
@@ -539,7 +539,7 @@
             `).join('');
 
             modalContent.innerHTML = `
-                <h2>${student.student_info.name}</h2>
+                <h2>${student.result_data.candidate_info['Candidate Name']}</h2>
                 <p>
                     <strong>Roll:</strong> ${student.student_info.roll} |
                     <strong>Number:</strong> ${student.student_info.number} |
@@ -576,7 +576,7 @@
         searchInput.addEventListener('input', () => {
             const searchTerm = searchInput.value.toLowerCase();
             const filtered = allStudents.filter(student =>
-                student.student_info.name.toLowerCase().includes(searchTerm) ||
+                student.result_data.candidate_info['Candidate Name'].toLowerCase().includes(searchTerm) ||
                 // Search using registration_no
                 student.student_info.registration_no.toString().includes(searchTerm)
             );
@@ -646,7 +646,7 @@
                     <h2 style="text-align: center; color: #2c3e50; margin-bottom: 15px;">Student Result Details</h2>
                     <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
                         <h3 style="color: #3498db; margin-bottom: 5px;">Student Information</h3>
-                        <p style="margin: 0;"><strong>Name:</strong> ${student.student_info.name}</p>
+                        <p style="margin: 0;"><strong>Name:</strong> ${student.result_data.candidate_info['Candidate Name']}</p>
                         <p style="margin: 5px 0 0;"><strong>Roll:</strong> ${student.student_info.roll}</p>
                         <p style="margin: 5px 0 0;"><strong>Number:</strong> ${student.student_info.number}</p>
                         <p style="margin: 5px 0 0;"><strong>Registration:</strong> ${student.student_info.registration_no}</p>
@@ -704,7 +704,7 @@
 
                  // Save the PDF
                  // Replace spaces in name with underscores for filename
-                 const filename = `${student.student_info.name.replace(/\s+/g, '_')}_Result.pdf`;
+                 const filename = `${student.result_data.candidate_info['Candidate Name'].replace(/\s+/g, '_')}_Result.pdf`;
                  doc.save(filename);
 
             } catch (error) {
